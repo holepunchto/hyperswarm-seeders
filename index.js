@@ -211,6 +211,12 @@ module.exports = class SeederSwarm extends EventEmitter {
         if (st.connection) {
           st.connection.destroy(new Error('Dropped due to paused swarm'))
         }
+        if (st.timeout) {
+          clearTimeout(st.timeout)
+          st.timeout = null
+        }
+
+        st.tries = 0
       }
     }
 
@@ -222,6 +228,8 @@ module.exports = class SeederSwarm extends EventEmitter {
     this.drop = false
     if (this._pauseTimeout) clearTimeout(this._pauseTimeout)
     this._pauseTimeout = null
+
+    this._connectToSeeds()
   }
 
   async flush () {
@@ -229,7 +237,7 @@ module.exports = class SeederSwarm extends EventEmitter {
 
     if (this.clientConnections >= this.maxClientConnections || this.paused) return true
     if (this.record) await this.record.running
-    if (this._pending === 0) return true
+    if (this.clientConnections >= this.maxClientConnections || this.paused || this._pending === 0) return true
 
     return new Promise(resolve => this._flushes.push(resolve))
   }
@@ -402,6 +410,8 @@ module.exports = class SeederSwarm extends EventEmitter {
         this._notPending(st)
         this._removeConnection(conn)
         this.clientConnections--
+
+        if (this.paused) return
 
         const t = RETRIES[st.tries < RETRIES.length ? st.tries : RETRIES.length - 1]
 
