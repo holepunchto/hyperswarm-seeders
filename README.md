@@ -6,6 +6,9 @@ A seeders only swarm, verified by a mutable record
 npm install @hyperswarm/seeders
 ```
 
+Note that the list of seeds are stored in a veriable record in the DHT,
+meaning no one can spoof it, but other people can read it.
+
 ## Usage
 
 ``` js
