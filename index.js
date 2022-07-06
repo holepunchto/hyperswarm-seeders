@@ -157,7 +157,7 @@ module.exports = class SeederSwarm extends EventEmitter {
     this._status = new Map()
   }
 
-  get bootstrap () {
+  get owner () {
     return b4a.equals(this.seedKeyPair.publicKey, this.keyPair.publicKey)
   }
 

@@ -22,7 +22,7 @@ swarm.on('connection', function (connection) {
 })
 
 // if you are the first seed, add more seeds by passing a record
-if (swarm.bootstrap) {
+if (swarm.owner) {
   await swarm.join({
     seeds: [
       publicKey1,
