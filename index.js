@@ -5,7 +5,7 @@ const b4a = require('b4a')
 const m = require('./messages')
 
 const RECORD_INTERVAL = 10 * 60 * 1000
-const JITTER = 3 * 60 * 1000
+const RECORD_JITTER = 3 * 60 * 1000
 
 const RETRIES = [
   10000,
@@ -50,7 +50,7 @@ class MutableRecord {
       this.running = null
 
       if (!this.destroyed) {
-        this.timeout = setTimeout(update, Math.floor(Math.random() * JITTER + RECORD_INTERVAL))
+        this.timeout = setTimeout(update, Math.floor(Math.random() * RECORD_JITTER + RECORD_INTERVAL))
       }
 
       return updated
