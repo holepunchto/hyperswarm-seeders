@@ -11,6 +11,7 @@ const RETRIES = [
   10000,
   30000,
   60000,
+  2 * 60000,
   5 * 60000,
   20 * 60000,
   60 * 60000,
@@ -154,6 +155,8 @@ module.exports = class SeederSwarm extends EventEmitter {
     this.connections = []
 
     this._pauseTimeout = null
+    this._pending = 0
+    this._flushes = []
     this._status = new Map()
   }
 
@@ -210,6 +213,8 @@ module.exports = class SeederSwarm extends EventEmitter {
         }
       }
     }
+
+    this._updateFlush(true)
   }
 
   resume () {
@@ -219,14 +224,36 @@ module.exports = class SeederSwarm extends EventEmitter {
     this._pauseTimeout = null
   }
 
+  async flush () {
+    await Promise.resolve() // wait a tick
+
+    if (this.clientConnections >= this.maxClientConnections || this.paused) return true
+    if (this.record) await this.record.running
+    if (this._pending === 0) return true
+
+    return new Promise(resolve => this._flushes.push(resolve))
+  }
+
+  _updateFlush (force) {
+    if (force || this.clientConnections >= this.maxClientConnections || this.paused || this._pending === 0) {
+      while (this._flushes.length) {
+        const resolve = this._flushes.pop()
+        resolve(!force)
+      }
+    }
+  }
+
   async destroy () {
     for (const st of this._status) {
       if (st.timeout) clearTimeout(st.timeout)
+      st.removed = true
+      this._notPending(st)
     }
     this._status.clear()
     for (const c of this.connections) c.destroy()
     if (this.server) await this.server.close()
     await this.dht.destroy()
+    this._updateFlush(true)
   }
 
   async join (record) {
@@ -304,20 +331,33 @@ module.exports = class SeederSwarm extends EventEmitter {
       latest.add(k)
       if (this._status.has(k)) continue
 
+      this._pending++
       this._status.set(k, {
         tries: 0,
         publicKey: s,
         connection: this._get(s),
-        timeout: null
+        timeout: null,
+        removed: false,
+        pending: true
       })
     }
 
-    for (const k of this._status.keys()) {
+    for (const [k, st] of this._status) {
       if (latest.has(k)) continue
       this._status.delete(k)
+      if (st.connection) st.connection.destroy(new Error('Seed removed'))
+      st.removed = true
+      this._notPending(st)
     }
 
     this._connectToSeeds()
+  }
+
+  _notPending (st) {
+    if (!st.pending) return
+    st.pending = false
+    this._pending--
+    this._updateFlush(false)
   }
 
   _connectToSeeds () {
@@ -348,6 +388,7 @@ module.exports = class SeederSwarm extends EventEmitter {
         connected = true
         this.connections.push(conn)
         this.emit('connection', conn)
+        this._notPending(st)
       })
 
       conn.on('end', () => {
@@ -358,6 +399,7 @@ module.exports = class SeederSwarm extends EventEmitter {
       conn.on('close', () => {
         if (st.connection === conn) st.connection = null
 
+        this._notPending(st)
         this._removeConnection(conn)
         this.clientConnections--
 
@@ -369,7 +411,7 @@ module.exports = class SeederSwarm extends EventEmitter {
           st.tries++
         }
 
-        st.timeout = setTimeout(retry, Math.floor(t / 2 + Math.random() * t), this, st)
+        if (!st.removed) st.timeout = setTimeout(retry, Math.floor(t / 2 + Math.random() * t), this, st)
         this._connectToSeeds()
       })
     }
