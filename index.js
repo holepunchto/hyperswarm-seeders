@@ -290,8 +290,8 @@ module.exports = class SeederSwarm extends EventEmitter {
 
   _onupdate () {
     if (this.seeder) {
-      // seeds should gossip with ~3 other random seeds
-      this.maxClientConnections = Math.min(this.record.value.seeds.length, 3)
+      // seeds should gossip with all other random seeds
+      this.maxClientConnections = this.record.value.seeds.length
       this.listen()
     }
 
