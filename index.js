@@ -335,7 +335,7 @@ module.exports = class SeederSwarm extends EventEmitter {
       const st = this._status.get(b4a.toString(pub, 'hex'))
       if (!st || st.timeout !== null || st.connection) continue
 
-      this.maxClientConnections++
+      this.clientConnections++
 
       let remoteEnded = false
       let connected = false
@@ -359,7 +359,7 @@ module.exports = class SeederSwarm extends EventEmitter {
         if (st.connection === conn) st.connection = null
 
         this._removeConnection(conn)
-        this.maxClientConnections--
+        this.clientConnections--
 
         const t = RETRIES[st.tries < RETRIES.length ? st.tries : RETRIES.length - 1]
 
