@@ -8,6 +8,12 @@
     "b4a": "^1.5.3",
     "compact-encoding": "^2.7.0"
   },
+  "devDependencies": {
+    "standard": "^17.0.0"
+  },
+  "scripts": {
+    "test": "standard"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/mafintosh/seed-swarm.git"
