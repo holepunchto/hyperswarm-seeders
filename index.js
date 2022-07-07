@@ -252,6 +252,7 @@ module.exports = class SeederSwarm extends EventEmitter {
   }
 
   async destroy () {
+    if (this._pauseTimeout) clearTimeout(this._pauseTimeout)
     for (const st of this._status) {
       if (st.timeout) clearTimeout(st.timeout)
       st.removed = true
@@ -260,6 +261,7 @@ module.exports = class SeederSwarm extends EventEmitter {
     this._status.clear()
     for (const c of this.connections) c.destroy()
     if (this.server) await this.server.close()
+    if (this.record) await this.record.destroy()
     await this.dht.destroy()
     this._updateFlush(true)
   }
