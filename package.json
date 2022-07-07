@@ -1,6 +1,6 @@
 {
   "name": "@hyperswarm/seeders",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Only swarm with verified seeders",
   "main": "index.js",
   "dependencies": {
