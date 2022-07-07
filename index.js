@@ -373,6 +373,7 @@ module.exports = class SeederSwarm extends EventEmitter {
     if (this.clientConnections >= this.maxClientConnections) return
 
     const pubs = this.seeds
+    if (!pubs) return
     const start = Math.floor(Math.random() * pubs.length)
 
     for (let i = 0; i < pubs.length && this.clientConnections < this.maxClientConnections; i++) {
