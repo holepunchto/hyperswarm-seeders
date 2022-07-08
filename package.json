@@ -16,12 +16,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/mafintosh/seed-swarm.git"
+    "url": "https://github.com/hyperswarm/seeders.git"
   },
   "author": "Mathias Buus (@mafintosh)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/mafintosh/seed-swarm/issues"
+    "url": "https://github.com/hyperswarm/seeders/issues"
   },
-  "homepage": "https://github.com/mafintosh/seed-swarm"
+  "homepage": "https://github.com/hyperswarm/seeders"
 }
