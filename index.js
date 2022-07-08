@@ -154,6 +154,7 @@ module.exports = class SeederSwarm extends EventEmitter {
     this.maxClientConnections = opts.maxClientConnections || 2
     this.connections = []
 
+    this._neverListen = opts.server === false
     this._destroyDHT = !opts.dht
     this._pauseTimeout = null
     this._pending = 0
@@ -285,6 +286,7 @@ module.exports = class SeederSwarm extends EventEmitter {
 
   listen () {
     if (this.server) return
+    if (this._neverListen) return
 
     this.server = this.dht.createServer((connection) => {
       const old = this._get(connection.remotePublicKey)
