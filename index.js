@@ -374,7 +374,7 @@ module.exports = class SeederSwarm extends EventEmitter {
   }
 
   _connectToSeeds () {
-    if (this.paused) return
+    if (this.paused || this.destroyed) return
     if (this.clientConnections >= this.maxClientConnections) return
 
     const pubs = this.seeds
