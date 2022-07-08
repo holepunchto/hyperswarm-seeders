@@ -394,7 +394,7 @@ module.exports = class SeederSwarm extends EventEmitter {
       let remoteEnded = false
       let connected = false
 
-      const conn = st.connection = this.dht.connect(pub)
+      const conn = st.connection = this.dht.connect(pub, { keyPair: this.keyPair })
 
       conn.on('error', () => {})
 
