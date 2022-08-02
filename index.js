@@ -3,6 +3,7 @@ const c = require('compact-encoding')
 const { EventEmitter } = require('events')
 const b4a = require('b4a')
 const m = require('./messages')
+const safetyCatch = require('safety-catch')
 
 const RECORD_INTERVAL = 10 * 60 * 1000
 const RECORD_JITTER = 3 * 60 * 1000
@@ -285,8 +286,7 @@ module.exports = class SeederSwarm extends EventEmitter {
   }
 
   listen () {
-    if (this.server) return
-    if (this._neverListen) return
+    if (this.server || this._neverListen) return Promise.resolve()
 
     this.server = this.dht.createServer((connection) => {
       const old = this._get(connection.remotePublicKey)
@@ -318,7 +318,7 @@ module.exports = class SeederSwarm extends EventEmitter {
       })
     })
 
-    this.server.listen(this.keyPair)
+    return this.server.listen(this.keyPair)
   }
 
   _removeConnection (connection) {
@@ -332,7 +332,7 @@ module.exports = class SeederSwarm extends EventEmitter {
     if (this.seeder) {
       // seeds should gossip with all other random seeds
       this.maxClientConnections = this.record.value.seeds.length
-      this.listen()
+      this.listen().catch(safetyCatch)
     }
 
     this.emit('update', this.record.value)
