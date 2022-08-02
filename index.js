@@ -3,6 +3,7 @@ const c = require('compact-encoding')
 const { EventEmitter } = require('events')
 const b4a = require('b4a')
 const m = require('./messages')
+const safetyCatch = require('safety-catch')
 
 const RECORD_INTERVAL = 10 * 60 * 1000
 const RECORD_JITTER = 3 * 60 * 1000
@@ -151,6 +152,7 @@ module.exports = class SeederSwarm extends EventEmitter {
     this.drop = false
     this.server = null
     this.clientConnections = 0
+    this.clientConnecting = 0
     this.maxClientConnections = opts.maxClientConnections || 2
     this.connections = []
 
@@ -234,18 +236,22 @@ module.exports = class SeederSwarm extends EventEmitter {
     this._connectToSeeds()
   }
 
+  _fullClient () {
+    return (this.clientConnections - this.clientConnecting) >= this.maxClientConnections
+  }
+
   async flush () {
     await Promise.resolve() // wait a tick
 
-    if (this.clientConnections >= this.maxClientConnections || this.paused) return true
+    if (this._fullClient() || this.paused) return true
     if (this.record) await this.record.running
-    if (this.clientConnections >= this.maxClientConnections || this.paused || this._pending === 0) return true
+    if (this._fullClient() || this.paused || this._pending === 0) return true
 
     return new Promise(resolve => this._flushes.push(resolve))
   }
 
   _updateFlush (force) {
-    if (force || this.clientConnections >= this.maxClientConnections || this.paused || this._pending === 0) {
+    if (force || this._fullClient() || this.paused || this._pending === 0) {
       while (this._flushes.length) {
         const resolve = this._flushes.pop()
         resolve(!force)
@@ -285,8 +291,7 @@ module.exports = class SeederSwarm extends EventEmitter {
   }
 
   listen () {
-    if (this.server) return
-    if (this._neverListen) return
+    if (this.server || this._neverListen) return Promise.resolve()
 
     this.server = this.dht.createServer((connection) => {
       const old = this._get(connection.remotePublicKey)
@@ -318,7 +323,7 @@ module.exports = class SeederSwarm extends EventEmitter {
       })
     })
 
-    this.server.listen(this.keyPair)
+    return this.server.listen(this.keyPair)
   }
 
   _removeConnection (connection) {
@@ -332,7 +337,7 @@ module.exports = class SeederSwarm extends EventEmitter {
     if (this.seeder) {
       // seeds should gossip with all other random seeds
       this.maxClientConnections = this.record.value.seeds.length
-      this.listen()
+      this.listen().catch(safetyCatch)
     }
 
     this.emit('update', this.record.value)
@@ -367,9 +372,10 @@ module.exports = class SeederSwarm extends EventEmitter {
   }
 
   _notPending (st) {
-    if (!st.pending) return
-    st.pending = false
-    this._pending--
+    if (st.pending) {
+      st.pending = false
+      this._pending--
+    }
     this._updateFlush(false)
   }
 
@@ -390,6 +396,7 @@ module.exports = class SeederSwarm extends EventEmitter {
       if (!st || st.timeout !== null || st.connection) continue
 
       this.clientConnections++
+      this.clientConnecting++
 
       let remoteEnded = false
       let connected = false
@@ -400,6 +407,7 @@ module.exports = class SeederSwarm extends EventEmitter {
 
       conn.on('connect', () => {
         connected = true
+        this.clientConnecting--
         this.connections.push(conn)
         this.emit('connection', conn)
         this._notPending(st)
@@ -412,6 +420,7 @@ module.exports = class SeederSwarm extends EventEmitter {
 
       conn.on('close', () => {
         if (st.connection === conn) st.connection = null
+        if (!connected) this.clientConnecting--
 
         this._notPending(st)
         this._removeConnection(conn)
