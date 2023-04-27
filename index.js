@@ -1,4 +1,4 @@
-const DHT = require('@hyperswarm/dht')
+const DHT = require('hyperdht')
 const c = require('compact-encoding')
 const { EventEmitter } = require('events')
 const b4a = require('b4a')
