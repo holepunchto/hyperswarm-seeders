@@ -4,9 +4,9 @@
   "description": "Only swarm with verified seeders",
   "main": "index.js",
   "dependencies": {
-    "@hyperswarm/dht": "^6.2.0",
     "b4a": "^1.5.3",
     "compact-encoding": "^2.7.0",
+    "hyperdht": "^6.5.2",
     "safety-catch": "^1.0.2"
   },
   "devDependencies": {
