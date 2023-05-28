@@ -45,4 +45,4 @@ if (swarm.owner) {
 
 ## License
 
-MIT
+Apache-2.0
