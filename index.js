@@ -156,6 +156,7 @@ module.exports = class SeederSwarm extends EventEmitter {
     this.maxClientConnections = opts.maxClientConnections || 2
     this.connections = []
 
+    this._destroying = false
     this._neverListen = opts.server === false
     this._destroyDHT = !opts.dht
     this._pauseTimeout = null
@@ -260,6 +261,9 @@ module.exports = class SeederSwarm extends EventEmitter {
   }
 
   async destroy () {
+    if (this._destroying) return
+    this._destroying = true
+
     if (this._pauseTimeout) clearTimeout(this._pauseTimeout)
     for (const st of this._status) {
       if (st.timeout) clearTimeout(st.timeout)
@@ -272,6 +276,8 @@ module.exports = class SeederSwarm extends EventEmitter {
     if (this.record) await this.record.destroy()
     if (this._destroyDHT) await this.dht.destroy()
     this._updateFlush(true)
+
+    this.emit('close')
   }
 
   async join (record) {
