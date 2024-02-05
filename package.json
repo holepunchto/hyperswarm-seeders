@@ -9,6 +9,12 @@
     "hyperdht": "^6.5.2",
     "safety-catch": "^1.0.2"
   },
+  "imports": {
+    "events": {
+      "bare": "bare-events",
+      "default": "events"
+    }
+  },
   "devDependencies": {
     "standard": "^17.0.0"
   },
