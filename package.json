@@ -5,9 +5,16 @@
   "main": "index.js",
   "dependencies": {
     "b4a": "^1.5.3",
+    "bare-events": "^2.2.0",
     "compact-encoding": "^2.7.0",
     "hyperdht": "^6.5.2",
     "safety-catch": "^1.0.2"
+  },
+  "imports": {
+    "events": {
+      "bare": "bare-events",
+      "default": "events"
+    }
   },
   "devDependencies": {
     "standard": "^17.0.0"
